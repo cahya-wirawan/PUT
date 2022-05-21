@@ -151,7 +151,8 @@ def inference_reconstruction(local_rank=0, args=None):
                                              sampler=sampler, 
                                              drop_last=True)
     else:
-        model = model.cuda()
+        if torch.cuda.is_available():
+            model = model.cuda()
         dataloader = torch.utils.data.DataLoader(data, 
                                                 batch_size=args.batch_size, 
                                                 num_workers=num_workers, 
@@ -539,7 +540,8 @@ def inference_complet_sample_in_feature_for_evaluation(local_rank=0, args=None):
         model = model.cuda()
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
     else:
-        model = model.cuda()
+        if torch.cuda.is_available():
+            model = model.cuda()
     
     count_cond = -1
     filter_ratio = [50] 
@@ -568,13 +570,14 @@ def inference_complet_sample_in_feature_for_evaluation(local_rank=0, args=None):
             save_root = save_root + '_prob{}'.format(fr)
         else:
             raise NotImplementedError
-
+        """
         mask_ratio = [
             ['0.4','0.6'],
             ['0.2','0.4'],
             ['0.1', '0.6'],
         ]
-        
+        """
+        mask_ratio = [None]
         for mr in mask_ratio:
             data.set_provided_mask_ratio(mask_ratio=mr)
 
@@ -851,8 +854,12 @@ if __name__ == '__main__':
             args.dist_url == "auto"
         else:
             assert args.num_node > 1
-        args.ngpus_per_node = torch.cuda.device_count()
-        args.world_size = args.ngpus_per_node * args.num_node
+        if torch.cuda.is_available():
+            args.ngpus_per_node = torch.cuda.device_count()
+            args.world_size = args.ngpus_per_node * args.num_node
+        else:
+            args.ngpus_per_node = 0
+            args.world_size = 1
 
     args.distributed = args.world_size > 1
     

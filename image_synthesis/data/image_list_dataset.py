@@ -124,7 +124,7 @@ class ImageListDataset(Dataset):
                 mask_paths = [os.path.join(self.data_root, self.provided_mask_name, p) for p in relpaths]
             if mask_ratio is None:
                 start = 0
-                end = -1
+                end = None
             elif isinstance(mask_ratio[0], float):
                 start = int(20000 * mask_ratio[0])
                 end = int(20000 * mask_ratio[1])
@@ -133,7 +133,7 @@ class ImageListDataset(Dataset):
                 end = MASK_RATIO_INDEX[mask_ratio[1]]
             mask_paths = mask_paths[start:end]
             self.masks = ImagePaths(paths=mask_paths)
-            my_print('Number of masks: {}, start: {}, end: {}'.format(end-start, start, end))
+            my_print('Number of masks: {}, start: {}, end: {}'.format(len(self.masks), start, end))
             if len(self.masks) == 0:
                 self.masks = None
                 my_print('Found masks length 0, set to None')
@@ -255,7 +255,10 @@ class ImageListDataset(Dataset):
                 mask_ratio = [1-keep_ratio[1], 1-keep_ratio[0]]
                 info = 'usm{}_mr{}_{}'.format(1-self.use_provided_mask, mask_ratio[0], mask_ratio[1])
             else:
-                info = 'upm{}_mr{}_{}'.format(self.use_provided_mask, self.use_provided_mask_ratio[0], self.use_provided_mask_ratio[1])
+                if self.use_provided_mask_ratio:
+                    info = 'upm{}_mr{}_{}'.format(self.use_provided_mask, self.use_provided_mask_ratio[0], self.use_provided_mask_ratio[1])
+                else:
+                    info = 'upm{}_mr'.format(self.use_provided_mask)
         else:
             raise NotImplementedError('{}'.format(type))
         return info
